@@ -4,6 +4,10 @@
 
 Real-time trading dashboard for BTC, ETH, SOL, XRP and BNB: live prices over WebSocket, market orders with server-side validation, and portfolio tracking.
 
+![Crypto trading dashboard](docs/dashboard.png)
+
+<img src="docs/mobile.png" alt="Dashboard on mobile" width="320">
+
 **Web:** Next.js 16, React 19, TypeScript, Tailwind 4, TanStack Query, Zustand, axios, Recharts
 **API:** NestJS 12, Zod, ws · **Tests:** Vitest
 
