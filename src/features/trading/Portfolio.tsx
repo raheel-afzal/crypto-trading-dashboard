@@ -3,9 +3,12 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { Panel } from '@/components/ui/Panel';
 import { coinsQuery } from '@/features/market/api';
+import { CoinIcon, COIN_COLOR } from '@/features/market/CoinIcon';
 import { getErrorMessage } from '@/lib/api/errors';
 import { formatPercent, formatQuantity, formatUsd } from '@/lib/format';
 import { portfolioQuery } from './api';
+
+const BAR_WIDTH = 56;
 
 export function Portfolio() {
   const { data: portfolio, error: portfolioError, refetch: refetchPortfolio } = useQuery(portfolioQuery);
@@ -61,23 +64,41 @@ export function Portfolio() {
         <table className="mt-4 w-full text-sm">
           <caption className="sr-only">Asset breakdown</caption>
           <thead>
-            <tr className="text-xs text-neutral-400">
+            <tr className="text-xs text-neutral-500">
               <th scope="col" className="pb-2 text-left font-medium">Asset</th>
               <th scope="col" className="pb-2 text-right font-medium">Value</th>
-              <th scope="col" className="pb-2 text-right font-medium">Allocation</th>
+              <th scope="col" className="pb-2 pl-3 text-right font-medium">Allocation</th>
             </tr>
           </thead>
           <tbody>
-            {positions.map((position) => (
-              <tr key={position.symbol} className="border-t border-white/5">
-                <th scope="row" className="py-2 text-left font-normal">
-                  <span className="font-medium text-neutral-100">{position.symbol}</span>
-                  <span className="block text-xs tabular-nums text-neutral-400">{formatQuantity(position.quantity)}</span>
-                </th>
-                <td className="py-2 text-right tabular-nums text-neutral-100">{formatUsd(position.value)}</td>
-                <td className="py-2 text-right tabular-nums text-neutral-400">{formatPercent((position.value / netValue) * 100)}</td>
-              </tr>
-            ))}
+            {positions.map((position) => {
+              const share = (position.value / netValue) * 100;
+              return (
+                <tr key={position.symbol} className="border-t border-white/5">
+                  <th scope="row" className="py-2.5 text-left font-normal">
+                    <span className="flex items-center gap-2.5">
+                      <CoinIcon symbol={position.symbol} className="size-7" />
+                      <span>
+                        <span className="block font-medium text-neutral-100">{position.symbol}</span>
+                        <span className="block text-xs tabular-nums text-neutral-400">{formatQuantity(position.quantity)}</span>
+                      </span>
+                    </span>
+                  </th>
+                  <td className="py-2.5 text-right tabular-nums text-neutral-100">{formatUsd(position.value)}</td>
+                  <td className="py-2.5 pl-3 text-right">
+                    <span className="block tabular-nums text-neutral-300">{formatPercent(share)}</span>
+                    <svg
+                      viewBox={`0 0 ${BAR_WIDTH} 4`}
+                      aria-hidden="true"
+                      className={`mt-1.5 ml-auto block h-1 w-14 ${COIN_COLOR[position.symbol]}`}
+                    >
+                      <rect width={BAR_WIDTH} height="4" rx="2" className="fill-white/10" />
+                      <rect width={(share / 100) * BAR_WIDTH} height="4" rx="2" fill="currentColor" />
+                    </svg>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

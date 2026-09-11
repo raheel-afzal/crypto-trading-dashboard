@@ -22,6 +22,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scheme-dark`}>
       <body className="min-h-full bg-neutral-950 text-neutral-200">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-96 bg-radial-[at_50%_0%] from-sky-500/10 to-transparent to-70%"
+        />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

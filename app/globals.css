@@ -5,9 +5,33 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --animate-tick-up: tick-up 600ms ease-out;
+  --animate-tick-down: tick-down 600ms ease-out;
+
+  @keyframes tick-up {
+    0%,
+    25% {
+      color: var(--color-emerald-400);
+    }
+  }
+
+  @keyframes tick-down {
+    0%,
+    25% {
+      color: var(--color-rose-400);
+    }
+  }
+}
+
 @theme static {
-  --color-chart-line: #3987e5;
   --color-chart-grid: #262626;
   --color-chart-axis: #a1a1a1;
   --color-chart-surface: #171717;
+
+  --color-coin-btc: #d95926;
+  --color-coin-eth: #9085e9;
+  --color-coin-sol: #d55181;
+  --color-coin-xrp: #3987e5;
+  --color-coin-bnb: #c98500;
 }
