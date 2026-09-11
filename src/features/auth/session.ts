@@ -15,7 +15,8 @@ export function readToken(): string | undefined {
 }
 
 export function saveToken(token: string): void {
-  document.cookie = `${SESSION_COOKIE}=${token}; path=/; max-age=${MAX_AGE_SECONDS}; samesite=lax`;
+  const secure = location.protocol === 'https:' ? '; secure' : '';
+  document.cookie = `${SESSION_COOKIE}=${token}; path=/; max-age=${MAX_AGE_SECONDS}; samesite=lax${secure}`;
 }
 
 export function clearToken(): void {

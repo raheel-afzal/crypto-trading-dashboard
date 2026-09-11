@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: crypto-trading-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build -w server
+    startCommand: npm run start:prod -w server
+    healthCheckPath: /api/coins
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
