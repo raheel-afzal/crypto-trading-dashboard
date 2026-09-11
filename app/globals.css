@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme static {
+  --color-chart-line: #3987e5;
+  --color-chart-grid: #262626;
+  --color-chart-axis: #a1a1a1;
+  --color-chart-surface: #171717;
+}
