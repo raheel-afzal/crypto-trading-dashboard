@@ -15,34 +15,49 @@ export interface Portfolio {
   holdings: Holding[];
 }
 
+interface Account {
+  cashBalance: number;
+  holdings: Map<CoinSymbol, number>;
+}
+
 @Injectable()
 export class PortfolioService {
-  private cashBalance = INITIAL_CASH;
-  private readonly holdings = new Map<CoinSymbol, number>();
+  private readonly accounts = new Map<string, Account>();
 
-  getPortfolio(): Portfolio {
+  getPortfolio(userId: string): Portfolio {
+    const account = this.account(userId);
     return {
-      cashBalance: this.cashBalance,
-      holdings: COIN_SYMBOLS.filter((symbol) => this.holdings.has(symbol)).map((symbol) => ({
+      cashBalance: account.cashBalance,
+      holdings: COIN_SYMBOLS.filter((symbol) => account.holdings.has(symbol)).map((symbol) => ({
         symbol,
-        quantity: this.getHolding(symbol),
+        quantity: this.getHolding(userId, symbol),
       })),
     };
   }
 
-  getCashBalance(): number {
-    return this.cashBalance;
+  getCashBalance(userId: string): number {
+    return this.account(userId).cashBalance;
   }
 
-  getHolding(symbol: CoinSymbol): number {
-    return this.holdings.get(symbol) ?? 0;
+  getHolding(userId: string, symbol: CoinSymbol): number {
+    return this.account(userId).holdings.get(symbol) ?? 0;
   }
 
-  applyTrade({ coin, type, quantity, total }: Order): void {
+  applyTrade(userId: string, { coin, type, quantity, total }: Order): void {
+    const account = this.account(userId);
     const direction = type === 'buy' ? 1 : -1;
-    const remaining = roundTo(this.getHolding(coin) + direction * quantity, 8);
-    if (remaining > 0) this.holdings.set(coin, remaining);
-    else this.holdings.delete(coin);
-    this.cashBalance = roundTo(this.cashBalance - direction * total, 8);
+    const remaining = roundTo(this.getHolding(userId, coin) + direction * quantity, 8);
+    if (remaining > 0) account.holdings.set(coin, remaining);
+    else account.holdings.delete(coin);
+    account.cashBalance = roundTo(account.cashBalance - direction * total, 8);
+  }
+
+  private account(userId: string): Account {
+    const existing = this.accounts.get(userId);
+    if (existing) return existing;
+
+    const account: Account = { cashBalance: INITIAL_CASH, holdings: new Map() };
+    this.accounts.set(userId, account);
+    return account;
   }
 }

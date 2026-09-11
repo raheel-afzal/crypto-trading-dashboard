@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { USERS } from '../auth/users.js';
 import type { CoinSymbol } from '../market/coins.js';
 import { MarketService } from '../market/market.service.js';
 import { type Portfolio, PortfolioService } from '../portfolio/portfolio.service.js';
@@ -42,37 +43,55 @@ const SEED_ORDERS: (Fill & { hoursAgo: number })[] = [
 
 @Injectable()
 export class OrdersService {
-  private readonly orders: Order[] = [];
+  private readonly history = new Map<string, Order[]>();
 
   constructor(
     private readonly market: MarketService,
     private readonly portfolio: PortfolioService,
   ) {
-    for (const { hoursAgo, ...fill } of SEED_ORDERS) {
-      this.fill(fill, new Date(Date.now() - hoursAgo * HOUR_MS));
-    }
+    // Every demo account opens with the same history, so cash and holdings are
+    // seeded before the first request instead of depending on which one arrives first.
+    for (const user of USERS) this.seed(user.id);
   }
 
-  findAll(): Order[] {
-    return this.orders;
+  findAll(userId: string): Order[] {
+    return this.ordersFor(userId);
   }
 
-  place(request: OrderRequest): OrderResult {
+  place(userId: string, request: OrderRequest): OrderResult {
+    const orders = this.ordersFor(userId);
     const marketPrice = this.market.getPrice(request.coin);
     const rejection = checkOrder(request, {
       marketPrice,
-      cashBalance: this.portfolio.getCashBalance(),
-      heldQuantity: this.portfolio.getHolding(request.coin),
+      cashBalance: this.portfolio.getCashBalance(userId),
+      heldQuantity: this.portfolio.getHolding(userId, request.coin),
     });
     if (rejection) {
       throw new UnprocessableEntityException({ statusCode: 422, error: 'Unprocessable Entity', ...rejection });
     }
 
-    const order = this.fill({ ...request, price: marketPrice }, new Date());
-    return { order, portfolio: this.portfolio.getPortfolio() };
+    const order = this.fill(userId, { ...request, price: marketPrice }, new Date());
+    orders.unshift(order);
+    return { order, portfolio: this.portfolio.getPortfolio(userId) };
   }
 
-  private fill({ coin, type, quantity, price }: Fill, filledAt: Date): Order {
+  private ordersFor(userId: string): Order[] {
+    const existing = this.history.get(userId);
+    if (existing) return existing;
+
+    const orders: Order[] = [];
+    this.history.set(userId, orders);
+    return orders;
+  }
+
+  private seed(userId: string): void {
+    const orders = this.ordersFor(userId);
+    for (const { hoursAgo, ...fill } of SEED_ORDERS) {
+      orders.unshift(this.fill(userId, fill, new Date(Date.now() - hoursAgo * HOUR_MS)));
+    }
+  }
+
+  private fill(userId: string, { coin, type, quantity, price }: Fill, filledAt: Date): Order {
     const order: Order = {
       id: randomUUID(),
       coin,
@@ -83,8 +102,7 @@ export class OrdersService {
       status: 'filled',
       timestamp: filledAt.toISOString(),
     };
-    this.portfolio.applyTrade(order);
-    this.orders.unshift(order);
+    this.portfolio.applyTrade(userId, order);
     return order;
   }
 }
