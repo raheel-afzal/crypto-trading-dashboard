@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { roundTo } from '../common/round.js';
-import { COIN_SYMBOLS, type CoinSymbol } from '../market/coins.js';
-import type { Order } from '../orders/orders.service.js';
+import { Injectable } from "@nestjs/common";
+import { COIN_SYMBOLS, type CoinSymbol } from "../market/coins.js";
+import { PrismaService } from "../prisma/prisma.service.js";
 
-const INITIAL_CASH = 100_000;
+export const INITIAL_CASH = 100_000;
+
+// Postgres returns decimals as objects; every amount crosses the API as a number.
+type Numeric = number | { toString(): string };
 
 export interface Holding {
   symbol: CoinSymbol;
@@ -15,49 +17,40 @@ export interface Portfolio {
   holdings: Holding[];
 }
 
-interface Account {
-  cashBalance: number;
-  holdings: Map<CoinSymbol, number>;
+export function toPortfolio(
+  cashBalance: Numeric,
+  holdings: readonly { symbol: CoinSymbol; quantity: Numeric }[],
+): Portfolio {
+  const held = new Map(
+    holdings.map((holding) => [holding.symbol, Number(holding.quantity)]),
+  );
+  return {
+    cashBalance: Number(cashBalance),
+    holdings: COIN_SYMBOLS.filter((symbol) => held.has(symbol)).map(
+      (symbol) => ({
+        symbol,
+        quantity: held.get(symbol) ?? 0,
+      }),
+    ),
+  };
 }
 
 @Injectable()
 export class PortfolioService {
-  private readonly accounts = new Map<string, Account>();
+  constructor(private readonly prisma: PrismaService) {}
 
-  getPortfolio(userId: string): Portfolio {
-    const account = this.account(userId);
-    return {
-      cashBalance: account.cashBalance,
-      holdings: COIN_SYMBOLS.filter((symbol) => account.holdings.has(symbol)).map((symbol) => ({
-        symbol,
-        quantity: this.getHolding(userId, symbol),
-      })),
-    };
-  }
+  async getPortfolio(userId: string): Promise<Portfolio> {
+    const [user, holdings] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { cashBalance: true },
+      }),
+      this.prisma.holding.findMany({
+        where: { userId },
+        select: { symbol: true, quantity: true },
+      }),
+    ]);
 
-  getCashBalance(userId: string): number {
-    return this.account(userId).cashBalance;
-  }
-
-  getHolding(userId: string, symbol: CoinSymbol): number {
-    return this.account(userId).holdings.get(symbol) ?? 0;
-  }
-
-  applyTrade(userId: string, { coin, type, quantity, total }: Order): void {
-    const account = this.account(userId);
-    const direction = type === 'buy' ? 1 : -1;
-    const remaining = roundTo(this.getHolding(userId, coin) + direction * quantity, 8);
-    if (remaining > 0) account.holdings.set(coin, remaining);
-    else account.holdings.delete(coin);
-    account.cashBalance = roundTo(account.cashBalance - direction * total, 8);
-  }
-
-  private account(userId: string): Account {
-    const existing = this.accounts.get(userId);
-    if (existing) return existing;
-
-    const account: Account = { cashBalance: INITIAL_CASH, holdings: new Map() };
-    this.accounts.set(userId, account);
-    return account;
+    return toPortfolio(user.cashBalance, holdings);
   }
 }

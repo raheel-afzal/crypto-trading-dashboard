@@ -1,8 +1,13 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { type Coin, type CoinSymbol, coinSymbolSchema, type PricePoint } from './coins.js';
-import { MarketService } from './market.service.js';
+import { Controller, Get, Param } from "@nestjs/common";
+import {
+  type Coin,
+  type CoinSymbol,
+  coinSymbolSchema,
+  type PricePoint,
+} from "./coins.js";
+import { MarketService } from "./market.service.js";
 
-@Controller('coins')
+@Controller("coins")
 export class CoinsController {
   constructor(private readonly market: MarketService) {}
 
@@ -11,8 +16,10 @@ export class CoinsController {
     return this.market.getCoins();
   }
 
-  @Get(':symbol/history')
-  findHistory(@Param('symbol', { schema: coinSymbolSchema }) symbol: CoinSymbol): PricePoint[] {
+  @Get(":symbol/history")
+  findHistory(
+    @Param("symbol", { schema: coinSymbolSchema }) symbol: CoinSymbol,
+  ): PricePoint[] {
     return this.market.getHistory(symbol);
   }
 }

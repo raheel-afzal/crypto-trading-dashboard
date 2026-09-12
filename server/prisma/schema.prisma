@@ -1,0 +1,62 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CoinSymbol {
+  BTC
+  ETH
+  SOL
+  XRP
+  BNB
+}
+
+enum OrderType {
+  buy
+  sell
+}
+
+enum OrderStatus {
+  filled
+}
+
+model User {
+  id           String    @id
+  email        String    @unique
+  name         String
+  passwordHash String
+  cashBalance  Decimal   @db.Decimal(20, 8)
+  createdAt    DateTime  @default(now())
+  holdings     Holding[]
+  orders       Order[]
+}
+
+model Holding {
+  userId   String
+  symbol   CoinSymbol
+  quantity Decimal    @db.Decimal(28, 8)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, symbol])
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  coin      CoinSymbol
+  type      OrderType
+  quantity  Decimal     @db.Decimal(28, 8)
+  price     Decimal     @db.Decimal(20, 8)
+  total     Decimal     @db.Decimal(20, 8)
+  status    OrderStatus
+  timestamp DateTime
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp(sort: Desc)])
+}
