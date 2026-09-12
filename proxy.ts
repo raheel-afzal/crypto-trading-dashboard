@@ -7,13 +7,14 @@ import { SESSION_COOKIE } from '@/features/auth/session';
 export function proxy(request: NextRequest) {
   const signedIn = request.cookies.has(SESSION_COOKIE);
   const { pathname } = request.nextUrl;
+  const onAuthRoute = pathname === '/login' || pathname === '/signup';
 
-  if (!signedIn && pathname !== '/login') return NextResponse.redirect(new URL('/login', request.url));
-  if (signedIn && pathname === '/login') return NextResponse.redirect(new URL('/', request.url));
+  if (!signedIn && !onAuthRoute) return NextResponse.redirect(new URL('/login', request.url));
+  if (signedIn && onAuthRoute) return NextResponse.redirect(new URL('/', request.url));
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/login'],
+  matcher: ['/', '/login', '/signup'],
 };
