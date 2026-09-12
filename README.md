@@ -1,7 +1,5 @@
 # Crypto Trading Dashboard
 
-[![CI](https://github.com/raheel-afzal/crypto-trading-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/raheel-afzal/crypto-trading-dashboard/actions/workflows/ci.yml)
-
 Real-time trading dashboard for BTC, ETH, SOL, XRP and BNB: live prices over WebSocket, market orders with server-side validation, and portfolio tracking.
 
 **Live demo:** <https://crypto-trading-dashboard-bay.vercel.app> — sign in with **demo@trading.dev / demo1234**. The API sleeps after 15 minutes idle, so the first load can take up to a minute.
