@@ -6,11 +6,11 @@
     "server"
   ],
   "scripts": {
-    "dev": "node api.js && concurrently -k -n api,web -c magenta,cyan \"npm:dev:api\" \"npm:dev:web\"",
-    "dev:web": "node api.js && next dev",
-    "dev:api": "node api.js && npm run start:dev -w server",
+    "dev": "concurrently -k -n api,web -c magenta,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:web": "next dev",
+    "dev:api": "npm run start:dev -w server",
     "build": "next build",
-    "start": "node api.js && next start",
+    "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "npm test -w server"
